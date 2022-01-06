@@ -1,5 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+from database import (
+    fetch_one_todo,
+    fetch_all_todos,
+    create_todo,
+    remove_todo,
+    update_todo
+)
+from model import Todo
 
 app = FastAPI()
 
@@ -20,26 +29,39 @@ def read_root():
 
 @app.get('/api/todo')
 async def get_todo():
-    return 1
+    response = await fetch_all_todos()
+    return response
 
 
 @app.get('/api/todo{title}')
 async def get_todo_by_title(title):
-    return 1
+    response = await fetch_one_todo(title)
+    if response:
+        return response
+    raise HTTPException(404, f"Has no todos with thin title {title}")
 
 
 @app.post('/api/todo')
-async def post_todo(todo):
-    return 1
+async def post_todo(todo: Todo):
+    response = await create_todo(todo.dict())
+    if response:
+        return response
+    raise HTTPException(400, "Something went wrong / Bad Request")
 
 
-@app.put('/api/todo{title}')
-async def put_todo(title, data):
-    return 1
+@app.put('/api/todo{title}/', response_model=Todo)
+async def put_todo(title: str, description: str):
+    response = await update_todo(title, description)
+    if response:
+        return response
+    raise HTTPException(404, f"Has no todos with thin title {title}")
 
 
 @app.delete('/api/todo{title}')
-async def delete_todo(todo):
-    return 1
+async def delete_todo(title):
+    response = await remove_todo(title)
+    if response:
+        return "Successfully delete item"
+    raise HTTPException(404, f"Has no todos with thin title {title}")
 
 
